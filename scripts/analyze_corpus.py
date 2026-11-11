@@ -4,6 +4,7 @@ import csv
 import json
 import math
 import re
+import sys
 from collections import Counter, defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
@@ -524,7 +525,12 @@ def main():
     args = parser.parse_args()
 
     out = Path(args.output).resolve()
-    out.mkdir(parents=True, exist_ok=True)
+    try:
+        out.mkdir(parents=True, exist_ok=True)
+    except OSError as exc:
+        print(f"Error: cannot create output directory '{out}': {exc.strerror or exc}",
+              file=sys.stderr)
+        raise SystemExit(1) from exc
 
     notes = collect(args.input, DEFAULT_SKIP_DIRS | set(args.skip_dir))
     if not notes:

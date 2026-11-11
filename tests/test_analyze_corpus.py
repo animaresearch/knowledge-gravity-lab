@@ -100,3 +100,22 @@ def test_cli_smoke_outputs_collision_stats_and_no_check_fallback(tmp_path):
         rows = list(csv.DictReader(f))
     assert rows
     assert all(row["review_reasons"] != "check" for row in rows)
+
+
+def test_cli_output_path_blocked_by_file_exits_cleanly(tmp_path):
+    vault = tmp_path / "vault"
+    vault.mkdir()
+    (vault / "Note.md").write_text("# Note\nSome body text here.\n", encoding="utf-8")
+    blocked = tmp_path / "out"
+    blocked.write_text("already a file\n", encoding="utf-8")
+
+    result = subprocess.run(
+        [sys.executable, str(SCRIPT), "--input", str(vault), "--output", str(blocked)],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    )
+
+    assert result.returncode == 1
+    assert "Traceback (most recent call last)" not in result.stderr
+    assert "cannot create output directory" in result.stderr
